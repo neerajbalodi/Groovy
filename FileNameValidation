@@ -1,0 +1,38 @@
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.regex.Pattern;
+import groovy.json.*
+
+def flowFile = session.get()
+if (!flowFile) return
+
+try {
+
+	String fileName = flowFile.getAttribute('fName')
+        String[] split = fileName.split("_")
+        String pattern = "ddMMyyyy"
+        String lastPattern = "^[0-9]*.csv"
+        Calendar calendar = Calendar.getInstance()
+        Date date = calendar.getTime()
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern)
+
+        String stringDate = simpleDateFormat.format(date)
+        flowFile = session.putAttribute(flowFile, 'myAttr', stringDate)
+	 flowFile = session.putAttribute(flowFile, 'myAttr1', fileName)
+
+
+
+        if (fileName.contains("CMT_USER_") && fileName.contains(stringDate +"_") && fileName.contains(".csv") && split[3].matches(lastPattern) ) {
+            System.out.println("Valid File")
+  session.transfer(flowFile, REL_SUCCESS)
+
+        }  else {
+		session.transfer(flowFile, REL_FAILURE)
+}
+
+} catch(Exception e) {
+  log.error('Error during JSON operations', e)
+  session.transfer(flowFile, REL_FAILURE)
+}
